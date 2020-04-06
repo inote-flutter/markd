@@ -777,12 +777,11 @@ abstract class ListSyntax extends BlockSyntax {
     var anyEmptyLinesBetweenBlocks = false;
 
     for (var item in items) {
-      bool hasCheck = false, checked, uppercase;
+      bool hasCheck = false, checked;
       if (item.lines.isNotEmpty) {
         final m = _reCheckbox.firstMatch(item.lines[0]);
         if (hasCheck = m != null) {
           checked = m[1] == 'x' || m[1] == 'X';
-          uppercase = m[1] == 'X';
           item.lines[0] = m[2];
         }
       }
@@ -794,7 +793,6 @@ abstract class ListSyntax extends BlockSyntax {
       if (hasCheck) {
         final check = Element('input', null);
         if (checked) check.attributes['checked'] = 'checked';
-        if (uppercase) check.attributes['uppercase'] = 'uppercase';
         if (parser.document.checkable) {
           check.attributes['data-line'] = '${item.offset}';
         } else {
