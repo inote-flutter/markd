@@ -49,7 +49,7 @@ final _olPattern =
     RegExp(r'^([ ]{0,3})(\d{1,9})([\.)])(([ \t])([ \t]*)(.*))?$');
 
 /// A line of hyphens separated by at least one pipe.
-final _tablePattern = RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?$');
+final _tablePattern = RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?[ \t]*$');
 
 /// Maintains the internal state needed to parse a series of lines into blocks
 /// of Markdown suitable for further inline parsing.
@@ -919,8 +919,30 @@ class TableSyntax extends BlockSyntax {
   Node parse(BlockParser parser) {
     var alignments = parseAlignments(parser.next);
     var columnCount = alignments.length;
-    var headRow = parseRow(parser, alignments, 'th');
-    if (headRow.children.length != columnCount) {
+    var headRow = parseRow(parser, alignments, 'th'),
+      headRowCols = headRow.children,
+      headRowColCount = headRowCols.length;
+    if (headRowColCount > columnCount) {
+      final lastCol = headRowCols.last as Element;
+      var fixed = lastCol.children.isEmpty;
+      if (!fixed) {
+        final col = lastCol.children.last;
+        fixed = col is UnparsedContent && col.textContent.isEmpty;
+      }
+      if (fixed) {
+        headRowCols.removeLast();
+        --headRowColCount;
+      }
+
+      while (headRowColCount > columnCount) {
+        alignments.add(null);
+        ++columnCount;
+      }
+    } else if (headRowColCount < columnCount) {
+      alignments.removeRange(headRowColCount, columnCount);
+      columnCount = headRowColCount;
+    }
+    if (headRowColCount != columnCount) {
       return null;
     }
     var head = Element('thead', [headRow]);

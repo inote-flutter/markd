@@ -1,0 +1,21 @@
+>>> rows wrapped in pipes and headers with extra spaces
+| head | cells |  
+|------|-------|
+| body | cells |
+
+<<<
+<table><thead><tr><th>head</th><th>cells</th></tr></thead><tbody><tr><td>body</td><td>cells</td></tr></tbody></table>
+>>> rows wrapped in pipes and alignments with extra spaces
+| head | cells |
+|------|-------|  
+| body | cells |
+
+<<<
+<table><thead><tr><th>head</th><th>cells</th></tr></thead><tbody><tr><td>body</td><td>cells</td></tr></tbody></table>
+>>> rows wrapped in pipes and alignments less than headers
+| head | cells |
+|------|
+| body | cells |
+
+<<<
+<table><thead><tr><th>head</th><th>cells</th></tr></thead><tbody><tr><td>body</td><td>cells</td></tr></tbody></table>

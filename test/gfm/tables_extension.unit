@@ -42,8 +42,7 @@ bar
 | --- |
 | bar |
 <<<
-<p>| --- |
-| bar |</p>
+<table><thead><tr><th>abc</th><th>def</th></tr></thead><tbody><tr><td>bar</td><td /></tr></tbody></table>
 >>> Tables (extension) - 204
 | abc | def |
 | --- | --- |
