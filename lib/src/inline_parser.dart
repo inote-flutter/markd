@@ -867,8 +867,7 @@ class LinkSyntax extends TagSyntax {
     TagState state,
     Map<String, LinkReference> linkReferences,
   ) {
-    var normalizedLabel = label.toLowerCase();
-    var linkReference = linkReferences[normalizedLabel];
+    var linkReference = linkReferences[normalizeLinkLabel(label)];
     if (linkReference != null) {
       return createNode(parser, state, _map(parser, linkReference.destination), linkReference.title);
     } else {
