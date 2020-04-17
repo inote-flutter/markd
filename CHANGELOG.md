@@ -1,3 +1,7 @@
+## 2.1.3+7
+
+* Issue #13: the header and alignment row can be unbalanced.
+
 ## 2.1.3+6
 
 * `TableSyntax.splitRow` added for customizing the splitting of cells
