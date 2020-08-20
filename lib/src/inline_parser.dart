@@ -1073,7 +1073,6 @@ class LinkSyntax extends TagSyntax {
           buffer.writeCharCode(next);
           break;
 
-        case $space:
         case $lf:
         case $cr:
         case $ff:
