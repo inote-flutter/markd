@@ -11,26 +11,23 @@ import 'extension_set.dart';
 import 'inline_parser.dart';
 
 /// Converts the given string of Markdown to HTML.
-String markdownToHtml(
-  String markdown, {
-  Iterable<BlockSyntax> blockSyntaxes,
-  Iterable<InlineSyntax> inlineSyntaxes,
-  ExtensionSet extensionSet,
-  Resolver linkResolver,
-  Resolver imageLinkResolver,
-  bool inlineOnly = false,
-  bool checkable = false,
-  bool emptyListDisabled = false
-}) {
+String markdownToHtml(String markdown,
+    {Iterable<BlockSyntax>? blockSyntaxes,
+    Iterable<InlineSyntax>? inlineSyntaxes,
+    ExtensionSet? extensionSet,
+    Resolver? linkResolver,
+    Resolver? imageLinkResolver,
+    bool inlineOnly = false,
+    bool checkable = false,
+    bool emptyListDisabled = false}) {
   var document = Document(
-    blockSyntaxes: blockSyntaxes,
-    inlineSyntaxes: inlineSyntaxes,
-    extensionSet: extensionSet,
-    linkResolver: linkResolver,
-    imageLinkResolver: imageLinkResolver,
-    checkable: checkable,
-    emptyListDisabled: emptyListDisabled
-  );
+      blockSyntaxes: blockSyntaxes,
+      inlineSyntaxes: inlineSyntaxes,
+      extensionSet: extensionSet,
+      linkResolver: linkResolver,
+      imageLinkResolver: imageLinkResolver,
+      checkable: checkable,
+      emptyListDisabled: emptyListDisabled);
 
   if (inlineOnly) return renderToHtml(document.parseInline(markdown));
 
@@ -44,21 +41,22 @@ String markdownToHtml(
 String renderToHtml(List<Node> nodes) => HtmlRenderer().render(nodes);
 
 const _blockTags = {
-  'blockquote',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'hr',
-  'p',
-  'pre',
-}, _listTags = {
-  'li',
-  'ol',
-  'ul',
-};
+      'blockquote',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'hr',
+      'p',
+      'pre',
+    },
+    _listTags = {
+      'li',
+      'ol',
+      'ul',
+    };
 
 /// Translates a parsed AST to HTML.
 ///
@@ -66,11 +64,11 @@ const _blockTags = {
 /// and `ul` tags. Thus, the caller can apply `white-space: pre-wrap`
 /// and similar styles safely.
 class CondensedHtmlRenderer implements NodeVisitor {
-  StringBuffer buffer;
-  Set<String> uniqueIds;
+  late StringBuffer buffer;
+  late Set<String> uniqueIds;
 
   final _elementStack = <Element>[];
-  String _lastVisitedTag;
+  String _lastVisitedTag = '';
 
   CondensedHtmlRenderer();
 
@@ -99,7 +97,8 @@ class CondensedHtmlRenderer implements NodeVisitor {
     }
     buffer.write(content);
 
-    _lastVisitedTag = null;
+    // _lastVisitedTag = null;
+    _lastVisitedTag = '';
   }
 
   @override
@@ -135,7 +134,7 @@ class CondensedHtmlRenderer implements NodeVisitor {
 
     // attach header anchor ids generated from text
     if (element.generatedId != null) {
-      buffer.write(' id="${uniquifyId(element.generatedId)}"');
+      buffer.write(' id="${uniquifyId(element.generatedId!)}"');
     }
   }
 
@@ -160,7 +159,7 @@ class CondensedHtmlRenderer implements NodeVisitor {
     assert(identical(_elementStack.last, element));
 
     if (element.children != null &&
-        element.children.isNotEmpty &&
+        element.children!.isNotEmpty &&
         _isBlockTag(_lastVisitedTag) &&
         _isBlockTag(element.tag)) {
       buffer.writeln();
@@ -189,10 +188,11 @@ class CondensedHtmlRenderer implements NodeVisitor {
   }
 
   bool _isBlockTag(String tag) => _blockTags.contains(tag);
+
   /// Whether there shall be line-break before rendering [tag]
   /// Default: we don't break between 'li' and other tags.
-  bool _shallBreakBefore(String tag)
-  => _isBlockTag(tag) && _lastVisitedTag != 'li';
+  bool _shallBreakBefore(String tag) =>
+      _isBlockTag(tag) && _lastVisitedTag != 'li';
 }
 
 /// Translates a parsed AST to HTML.
@@ -200,14 +200,14 @@ class HtmlRenderer extends CondensedHtmlRenderer {
   HtmlRenderer();
 
   @override
-  bool _isBlockTag(String tag)
-  => _blockTags.contains(tag) || _listTags.contains(tag);
+  bool _isBlockTag(String tag) =>
+      _blockTags.contains(tag) || _listTags.contains(tag);
   @override
   bool _shallBreakBefore(String tag) => _isBlockTag(tag);
 }
 
 /// Translates a parsed AST to plain text.
-/// 
+///
 /// When using [TextRenderrer], it is better not to use [UnorderedListSyntax]
 /// or [OrderedListSyntax].
 ///
@@ -219,10 +219,9 @@ class TextRenderer extends HtmlRenderer {
   void _writeOpenTagStart(Element element) {
     if (_lastVisitedTag == 'p') buffer.writeln();
   }
+
   @override
-  void _writeOpenTagEnd(Element element) {
-  }
+  void _writeOpenTagEnd(Element element) {}
   @override
-  void _writeCloseTag(Element element) {
-  }
+  void _writeCloseTag(Element element) {}
 }

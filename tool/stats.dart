@@ -115,12 +115,16 @@ Future<void> _processConfig(
           verboseFail: verbose, verboseLooseMatch: verboseLooseMatch);
 
       units.add(DataCase(
+        directory: '', //
+        file:'', //
+        description: '', //
+        skip: false, //
         front_matter: result.testCase.toString(),
         input: result.testCase.markdown,
         expectedOutput:
             (_improveStrict && result.compareLevel == CompareLevel.loose)
                 ? result.testCase.html
-                : result.result,
+                : result.result!,
       ));
 
       var nestedMap = scores.putIfAbsent(
@@ -150,7 +154,7 @@ Future<void> _processConfig(
   }
 }
 
-Object _convert(Object obj) {
+Object _convert(dynamic obj) {
   if (obj is CompareLevel) {
     switch (obj) {
       case CompareLevel.strict:
@@ -166,7 +170,7 @@ Object _convert(Object obj) {
     }
   }
   if (obj is Map) {
-    var map = <String, Object>{};
+    var map = <String, dynamic>{};
     obj.forEach((k, v) {
       var newKey = k.toString();
       map[newKey] = v;

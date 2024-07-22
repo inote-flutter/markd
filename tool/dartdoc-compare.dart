@@ -43,7 +43,7 @@ void main(List<String> arguments) {
       absolute(options[_dartdocDir] as String, 'pubspec.yaml'),
       options[_sdk] as bool);
 
-  String path;
+ late String path;
   if (comparer.sdk) {
     if (options.rest.isNotEmpty) {
       path = options.rest.single;

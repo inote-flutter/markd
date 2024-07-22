@@ -18,7 +18,7 @@ import '../test/util.dart';
 String get toolDir =>
     p.dirname((reflect(loadCommonMarkSections) as ClosureMirror)
         .function
-        .location
+        .location!
         .sourceUri
         .path);
 
@@ -49,13 +49,13 @@ Map<String, List<CommonMarkTestCase>> loadCommonMarkSections(
 
 class Config {
   static final Config commonMarkConfig =
-      Config._('common_mark', 'http://spec.commonmark.org/0.28/', null);
+      Config._('common_mark', 'http://spec.commonmark.org/0.28/', ExtensionSet.gitHubWeb);
   static final Config gfmConfig = Config._(
       'gfm', 'https://github.github.com/gfm/', ExtensionSet.gitHubFlavored);
 
   final String prefix;
   final String baseUrl;
-  final ExtensionSet extensionSet;
+  final ExtensionSet? extensionSet;
 
   Config._(this.prefix, this.baseUrl, this.extensionSet);
 }
@@ -90,7 +90,7 @@ enum CompareLevel { strict, loose, fail, error }
 class CompareResult {
   final CompareLevel compareLevel;
   final CommonMarkTestCase testCase;
-  final String result;
+  final String? result;
 
   CompareResult(this.testCase, this.result, this.compareLevel);
 }

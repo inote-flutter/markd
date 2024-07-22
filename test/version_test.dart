@@ -8,7 +8,7 @@ import 'package:yaml/yaml.dart';
 // Locate the "tool" directory. Use mirrors so that this works with the test
 // package, which loads this suite into an isolate.
 String get _currentDir => p
-    .dirname((reflect(main) as ClosureMirror).function.location.sourceUri.path);
+    .dirname((reflect(main) as ClosureMirror).function.location?.sourceUri.path??'');
 
 void main() {
   test('check versions', () {

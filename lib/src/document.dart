@@ -13,9 +13,9 @@ typedef InlineParser _InlineParserBuilder(String text, Document document);
 /// Maintains the context needed to parse a Markdown document.
 class Document {
   final Map<String, LinkReference> linkReferences = <String, LinkReference>{};
-  final ExtensionSet extensionSet;
-  final Resolver linkResolver;
-  final Resolver imageLinkResolver;
+  final ExtensionSet? extensionSet;
+  final Resolver? linkResolver;
+  final Resolver? imageLinkResolver;
   final bool encodeHtml, checkable;
   /// Whether to disable the generation of nested lists for empty content,
   /// such as `* * A`.
@@ -37,11 +37,11 @@ class Document {
   final _InlineParserBuilder _inlineParserBuilder;
 
   Document({
-    Iterable<BlockSyntax> blockSyntaxes,
-    Iterable<InlineSyntax> inlineSyntaxes,
-    ExtensionSet extensionSet,
-    this.linkResolver,
-    this.imageLinkResolver,
+    Iterable<BlockSyntax>? blockSyntaxes,
+    Iterable<InlineSyntax>? inlineSyntaxes,
+    ExtensionSet? extensionSet,
+   required this.linkResolver,
+   required this.imageLinkResolver,
     _BlockParserBuilder blockParserBuilder = _newBlockParser,
     _InlineParserBuilder inlineParserBuilder = _newInlineParser,
     this.options,
@@ -53,15 +53,15 @@ class Document {
       _inlineParserBuilder = inlineParserBuilder {
     _blockSyntaxes
       ..addAll(blockSyntaxes ?? [])
-      ..addAll(this.extensionSet.blockSyntaxes);
+      ..addAll(this.extensionSet?.blockSyntaxes??[]);
     _inlineSyntaxes
       ..addAll(inlineSyntaxes ?? [])
-      ..addAll(this.extensionSet.inlineSyntaxes);
+      ..addAll(this.extensionSet?.inlineSyntaxes??[]);
   }
   ///A lightweight, full-customized document.
   Document.plain(
       this._blockParserBuilder, this._inlineParserBuilder,
-      {this.extensionSet, this.linkResolver, this.imageLinkResolver,
+      {required this.extensionSet,required this.linkResolver,required this.imageLinkResolver,
        this.options, this.encodeHtml = true, this.checkable = false,
        this.emptyListDisabled = false});
 
@@ -90,7 +90,7 @@ class Document {
         nodes.insertAll(i, inlineNodes);
         i += inlineNodes.length - 1;
       } else if (node is Element && node.children != null) {
-        _parseInlineContent(node.children);
+        _parseInlineContent(node.children!);
       }
     }
   }

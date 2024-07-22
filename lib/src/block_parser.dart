@@ -49,7 +49,8 @@ final _olPattern =
     RegExp(r'^([ ]{0,3})(\d{1,9})([\.)])(([ \t])([ \t]*)(.*))?$');
 
 /// A line of hyphens separated by at least one pipe.
-final _tablePattern = RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?[ \t]*$');
+final _tablePattern =
+    RegExp(r'^[ ]{0,3}\|?( *:?\-+:? *\|)+( *:?\-+:? *)?[ \t]*$');
 
 /// Maintains the internal state needed to parse a series of lines into blocks
 /// of Markdown suitable for further inline parsing.
@@ -67,8 +68,10 @@ class BlockParser {
 
   /// Line number of the first line.
   int offset = 0;
+
   /// Index of the current line.
   int _pos = 0;
+
   /// Whether it is invoked when parsing a list.
   bool _inList = false;
 
@@ -104,9 +107,12 @@ class BlockParser {
   }
   BlockParser.be(this.lines, this.document, this.blockSyntaxes);
 
-  bool _canParse(BlockSyntax syntax)
-  => !(document.emptyListDisabled && _inList && _pos == 0 && syntax is ListSyntax)
-      && syntax.canParse(this);
+  bool _canParse(BlockSyntax syntax) =>
+      !(document.emptyListDisabled &&
+          _inList &&
+          _pos == 0 &&
+          syntax is ListSyntax) &&
+      syntax.canParse(this);
 
   /// Gets the current line.
   String get current => lines[_pos];
@@ -114,7 +120,8 @@ class BlockParser {
   /// Gets the line after the current one or `null` if there is none.
   String get next {
     // Don't read past the end.
-    if (_pos >= lines.length - 1) return null;
+    // if (_pos >= lines.length - 1) return null;
+    if (_pos >= lines.length - 1) return '';
     return lines[_pos + 1];
   }
 
@@ -129,7 +136,8 @@ class BlockParser {
       throw ArgumentError('Invalid linesAhead: $linesAhead; must be >= 0.');
     }
     // Don't read past the end.
-    if (_pos >= lines.length - linesAhead) return null;
+    // if (_pos >= lines.length - linesAhead) return null;
+    if (_pos >= lines.length - linesAhead) return '';
     return lines[_pos + linesAhead];
   }
 
@@ -147,7 +155,7 @@ class BlockParser {
 
   /// Gets whether or not the next line matches the given pattern.
   bool matchesNext(RegExp regex) {
-    if (next == null) return false;
+    if (next.isEmpty) return false;
     return regex.hasMatch(next);
   }
 
@@ -157,7 +165,8 @@ class BlockParser {
       for (var syntax in blockSyntaxes) {
         if (_canParse(syntax)) {
           var block = syntax.parse(this);
-          if (block != null) blocks.add(block);
+          // if (block != null) blocks.add(block);
+          blocks.add(block);
           break;
         }
       }
@@ -171,7 +180,7 @@ abstract class BlockSyntax {
   const BlockSyntax();
 
   /// Gets the regex used to identify the beginning of this block, if any.
-  RegExp get pattern => null;
+  RegExp get pattern;
 
   bool get canEndBlock => true;
 
@@ -188,7 +197,7 @@ abstract class BlockSyntax {
     while (!parser.isDone) {
       var match = pattern.firstMatch(parser.current);
       if (match == null) break;
-      childLines.add(match[1]);
+      childLines.add(match[1]!);
       parser.advance();
     }
 
@@ -198,12 +207,13 @@ abstract class BlockSyntax {
   /// Gets whether or not [parser]'s current line should end the previous block.
   static bool isAtBlockEnd(BlockParser parser) {
     if (parser.isDone) return true;
-    return parser.blockSyntaxes.any((s) => parser._canParse(s) && s.canEndBlock);
+    return parser.blockSyntaxes
+        .any((s) => parser._canParse(s) && s.canEndBlock);
   }
 
   /// Generates a valid HTML anchor from the inner text of [element].
   static String generateAnchorHash(Element element) =>
-      element.children.first.textContent
+      element.children!.first.textContent
           .toLowerCase()
           .trim()
           .replaceAll(RegExp(r'[^a-z0-9 _-]'), '')
@@ -222,13 +232,15 @@ class EmptyBlockSyntax extends BlockSyntax {
     parser.advance();
 
     // Don't actually emit anything.
-    return null;
+    // return null;
+    return Element('h6', [UnparsedContent('')]); //
   }
 }
 
 /// Parses setext-style headers.
 class SetextHeaderSyntax extends BlockSyntax {
   const SetextHeaderSyntax();
+  RegExp get pattern => _headerPattern;
 
   @override
   bool canParse(BlockParser parser) {
@@ -254,7 +266,7 @@ class SetextHeaderSyntax extends BlockSyntax {
   @override
   Node parse(BlockParser parser) {
     var lines = <String>[];
-    String tag;
+    String tag = '';
     while (!parser.isDone) {
       var match = _setextPattern.firstMatch(parser.current);
       if (match == null) {
@@ -264,7 +276,7 @@ class SetextHeaderSyntax extends BlockSyntax {
         continue;
       } else {
         // The underline.
-        tag = (match[1][0] == '=') ? 'h1' : 'h2';
+        tag = (match[1] != null && match[1]![0] == '=') ? 'h1' : 'h2';
         parser.advance();
         break;
       }
@@ -310,8 +322,8 @@ class HeaderSyntax extends BlockSyntax {
   Node parse(BlockParser parser) {
     var match = pattern.firstMatch(parser.current);
     parser.advance();
-    var level = match[1].length;
-    var contents = UnparsedContent(match[2].trim());
+    var level = match![1]!.length;
+    var contents = UnparsedContent(match[2]!.trim());
     return Element('h$level', [contents]);
   }
 }
@@ -343,7 +355,7 @@ class BlockquoteSyntax extends BlockSyntax {
     while (!parser.isDone) {
       var match = pattern.firstMatch(parser.current);
       if (match != null) {
-        childLines.add(match[1]);
+        childLines.add(match[1]!);
         parser.advance();
         continue;
       }
@@ -394,7 +406,7 @@ class CodeBlockSyntax extends BlockSyntax {
     while (!parser.isDone) {
       var match = pattern.firstMatch(parser.current);
       if (match != null) {
-        childLines.add(match[1]);
+        childLines.add(match[1]!);
         parser.advance();
       } else {
         // If there's a codeblock, then a newline, then a codeblock, keep the
@@ -403,7 +415,7 @@ class CodeBlockSyntax extends BlockSyntax {
             parser.next != null ? pattern.firstMatch(parser.next) : null;
         if (parser.current.trim() == '' && nextMatch != null) {
           childLines.add('');
-          childLines.add(nextMatch[1]);
+          childLines.add(nextMatch[1]!);
           parser.advance();
           parser.advance();
         } else {
@@ -449,20 +461,20 @@ class FencedCodeBlockSyntax extends BlockSyntax {
     //
     // > If the info string comes after a backtick fence, it may not contain
     // > any backtick characters.
-    return (codeFence.codeUnitAt(0) != $backquote ||
-        !infoString.codeUnits.contains($backquote));
+    return ((codeFence != null && codeFence.codeUnitAt(0) != $backquote) ||
+        !(infoString != null && infoString.codeUnits.contains($backquote)));
   }
 
   @override
-  List<String> parseChildLines(BlockParser parser, [String endBlock]) {
-    endBlock ??= '';
+  List<String> parseChildLines(BlockParser parser, [String endBlock = '']) {
+    // endBlock ??= '';
 
     var childLines = <String>[];
     parser.advance();
 
     while (!parser.isDone) {
       var match = pattern.firstMatch(parser.current);
-      if (match == null || !match[1].startsWith(endBlock)) {
+      if (match == null || !match[1]!.startsWith(endBlock)) {
         childLines.add(parser.current);
         parser.advance();
       } else {
@@ -481,8 +493,8 @@ class FencedCodeBlockSyntax extends BlockSyntax {
   Node parse(BlockParser parser) {
     // Get the syntax identifier, if there is one.
     var match = pattern.firstMatch(parser.current);
-    var endBlock = match.group(1);
-    var infoString = match.group(2);
+    String endBlock = match?.group(1) ?? '';
+    String infoString = match?.group(2) ?? '';
 
     var childLines = parseChildLines(parser, endBlock);
 
@@ -637,7 +649,7 @@ class ListItem {
   final List<String> lines;
   int offset;
 
-  ListItem(this.lines, [this.offset=0]);
+  ListItem(this.lines, [this.offset = 0]);
 }
 
 /// Base class for both ordered and unordered lists.
@@ -673,25 +685,27 @@ abstract class ListSyntax extends BlockSyntax {
         childLines = <String>[];
       }
     }
+
     void addChildLine(String line) {
       if (childLines.isEmpty) offset = parser._pos;
       childLines.add(line);
     }
 
-    Match match;
+    Match? match;
     bool tryMatch(RegExp pattern) {
       match = pattern.firstMatch(parser.current);
       return match != null;
     }
 
-    String listMarker;
-    String indent;
+    String? listMarker;
+    String? indent;
     // In case the first number in an ordered list is not 1, use it as the
     // "start".
-    int startNumber;
+    int? startNumber;
 
     while (!parser.isDone) {
-      var leadingSpace = _whitespaceRe.matchAsPrefix(parser.current).group(0);
+      var leadingSpace =
+          _whitespaceRe.matchAsPrefix(parser.current)?.group(0) ?? '';
       var leadingExpandedTabLength = _expandedTabLength(leadingSpace);
       if (tryMatch(_emptyPattern)) {
         if (_emptyPattern.hasMatch(parser.next ?? '')) {
@@ -710,22 +724,22 @@ abstract class ListSyntax extends BlockSyntax {
         // Horizontal rule takes precedence to a new list item.
         break;
       } else if (tryMatch(_ulPattern) || tryMatch(_olPattern)) {
-        var precedingWhitespace = match[1];
-        var digits = match[2] ?? '';
+        String precedingWhitespace = match![1] ?? '';
+        var digits = match![2] ?? '';
         if (startNumber == null && digits.isNotEmpty) {
           startNumber = int.parse(digits);
         }
-        var marker = match[3];
-        var firstWhitespace = match[5] ?? '';
-        var restWhitespace = match[6] ?? '';
-        var content = match[7] ?? '';
+        var marker = match![3] ?? '';
+        var firstWhitespace = match![5] ?? '';
+        var restWhitespace = match![6] ?? '';
+        var content = match![7] ?? '';
         var isBlank = content.isEmpty;
         if (listMarker != null && listMarker != marker) {
           // Changing the bullet or ordered list delimiter starts a new list.
           break;
         }
         listMarker = marker;
-        var markerAsSpaces = ' ' * (digits.length + marker.length);
+        String markerAsSpaces = ' ' * (digits.length + marker.length);
         if (isBlank) {
           // See http://spec.commonmark.org/0.28/#list-items under "3. Item
           // starting with a blank line."
@@ -774,12 +788,13 @@ abstract class ListSyntax extends BlockSyntax {
     var anyEmptyLinesBetweenBlocks = false;
 
     for (var item in items) {
-      bool hasCheck = false, checked;
+      var hasCheck = false;
+      var checked = false;
       if (item.lines.isNotEmpty) {
         final m = _reCheckbox.firstMatch(item.lines[0]);
         if (hasCheck = m != null) {
-          checked = m[1] == 'x' || m[1] == 'X';
-          item.lines[0] = m[2];
+          checked = m![1] == 'x' || m[1] == 'X';
+          item.lines[0] = m[2] ?? '';
         }
       }
 
@@ -800,8 +815,8 @@ abstract class ListSyntax extends BlockSyntax {
           ..attributes['type'] = 'checkbox';
 
         var child = children.first;
-        (child is Element && child.tag == 'p' ? child.children: children)
-        .insert(0, check);
+        (child is Element && child.tag == 'p' ? child.children : children)
+            ?.insert(0, check);
       }
 
       final li = Element('li', children);
@@ -819,11 +834,13 @@ abstract class ListSyntax extends BlockSyntax {
       // We must post-process the list items, converting any top-level paragraph
       // elements to just text elements.
       for (var item in itemNodes) {
-        for (var i = 0; i < item.children.length; i++) {
-          var child = item.children[i];
+        for (var i = 0;
+            (item.children != null && i < item.children!.length);
+            i++) {
+          var child = item.children![i];
           if (child is Element && child.tag == 'p') {
-            item.children.removeAt(i);
-            item.children.insertAll(i, child.children);
+            item.children?.removeAt(i);
+            item.children?.insertAll(i, child.children!);
           }
         }
       }
@@ -901,6 +918,9 @@ class TableSyntax extends BlockSyntax {
   @override
   bool get canEndBlock => false;
 
+  @override
+  RegExp get pattern => _tablePattern; //
+
   const TableSyntax();
 
   @override
@@ -920,13 +940,13 @@ class TableSyntax extends BlockSyntax {
     var alignments = parseAlignments(parser.next);
     var columnCount = alignments.length;
     var headRow = parseRow(parser, alignments, 'th'),
-      headRowCols = headRow.children,
-      headRowColCount = headRowCols.length;
+        headRowCols = headRow.children,
+        headRowColCount = headRowCols?.length ?? 0;
     if (headRowColCount > columnCount) {
-      final lastCol = headRowCols.last as Element;
-      var fixed = lastCol.children.isEmpty;
+      final lastCol = headRowCols!.last as Element;
+      var fixed = lastCol.children!.isEmpty;
       if (!fixed) {
-        final col = lastCol.children.last;
+        final col = lastCol.children!.last;
         fixed = col is UnparsedContent && col.textContent.isEmpty;
       }
       if (fixed) {
@@ -935,7 +955,8 @@ class TableSyntax extends BlockSyntax {
       }
 
       while (headRowColCount > columnCount) {
-        alignments.add(null);
+        // alignments.add(null);
+        alignments.add(''); //
         ++columnCount;
       }
     } else if (headRowColCount < columnCount) {
@@ -943,7 +964,8 @@ class TableSyntax extends BlockSyntax {
       columnCount = headRowColCount;
     }
     if (headRowColCount != columnCount) {
-      return null;
+      // return null;
+      return Element('h6', [UnparsedContent('')]); //
     }
     var head = Element('thead', [headRow]);
 
@@ -953,12 +975,14 @@ class TableSyntax extends BlockSyntax {
     var rows = <Element>[];
     while (!parser.isDone && !BlockSyntax.isAtBlockEnd(parser)) {
       var row = parseRow(parser, alignments, 'td');
-      while (row.children.length < columnCount) {
+      if (row.children == null) break; //
+
+      while (row.children!.length < columnCount) {
         // Insert synthetic empty cells.
-        row.children.add(Element.empty('td'));
+        row.children!.add(Element.empty('td'));
       }
-      while (row.children.length > columnCount) {
-        row.children.removeLast();
+      while (row.children!.length > columnCount) {
+        row.children!.removeLast();
       }
       rows.add(row);
     }
@@ -978,13 +1002,13 @@ class TableSyntax extends BlockSyntax {
       if (column.startsWith(':') && column.endsWith(':')) return 'center';
       if (column.startsWith(':')) return 'left';
       if (column.endsWith(':')) return 'right';
-      return null;
+      // return null;
+      return ''; //
     }).toList();
   }
 
   /// Splits the given [line] into a list of cells.
-  List<String> splitRow(String line)
-  => line.split(_pipePattern);
+  List<String> splitRow(String line) => line.split(_pipePattern);
 
   Element parseRow(
       BlockParser parser, List<String> alignments, String cellType) {
@@ -994,12 +1018,12 @@ class TableSyntax extends BlockSyntax {
     var cells = splitRow(line);
     parser.advance();
     var row = <Element>[];
-    String preCell;
+    var preCell = '';
 
     for (var cell in cells) {
-      if (preCell != null) {
+      if (preCell.isNotEmpty) {
         cell = preCell + cell;
-        preCell = null;
+        preCell = '';
       }
       if (cell.endsWith('\\')) {
         preCell = cell.substring(0, cell.length - 1) + '|';
@@ -1011,7 +1035,7 @@ class TableSyntax extends BlockSyntax {
     }
 
     for (var i = 0; i < row.length && i < alignments.length; i++) {
-      if (alignments[i] == null) continue;
+      // if (alignments[i] == null) continue;
       row[i].attributes['style'] = 'text-align: ${alignments[i]};';
     }
 
@@ -1020,10 +1044,10 @@ class TableSyntax extends BlockSyntax {
 
   /// Processes the given cell content ([cellContent]).
   /// It is a callback for subclasses to pre-process the cell's content
-  /// 
+  ///
   /// Default: return [cellContent]
-  String processCellContent(BlockParser parser, String cellContent)
-  => cellContent;
+  String processCellContent(BlockParser parser, String cellContent) =>
+      cellContent;
 }
 
 /// Parses paragraphs of regular text.
@@ -1031,6 +1055,9 @@ class ParagraphSyntax extends BlockSyntax {
   static final _reflinkDefinitionStart = RegExp(r'[ ]{0,3}\[');
 
   static final _whitespacePattern = RegExp(r'^\s*$');
+
+  @override
+  RegExp get pattern => _emptyPattern; //
 
   @override
   bool get canEndBlock => false;
@@ -1134,7 +1161,8 @@ class ParagraphSyntax extends BlockSyntax {
 
     if (i == lines.length) {
       // No paragraph content.
-      return null;
+      // return null;
+      return <String>[]; //
     } else {
       // Ends with paragraph content.
       return lines.sublist(i);
@@ -1153,30 +1181,31 @@ class ParagraphSyntax extends BlockSyntax {
         // Reference id in brackets, and URL.
         r'''\[((?:\\\]|[^\]])+)\]:\s*(?:<(\S+)>|(\S+))\s*'''
         // Title in double or single quotes, or parens.
-        r'''("[^"]+"|'[^']+'|\([^)]+\)|)\s*$''',
-        multiLine: true);
+        r'''("[^"]+"|'[^']+'|\([^)]+\)|)\s*$''', multiLine: true);
     var match = pattern.firstMatch(contents);
     if (match == null) {
       // Not a reference link definition.
       return false;
     }
-    if (match[0].length < contents.length) {
+    if (match[0]!.length < contents.length) {
       // Trailing text. No good.
       return false;
     }
 
-    var label = match[1];
-    var destination = match[2] ?? match[3];
-    var title = match[4];
+    var matchLength = match.groupCount;
+    var label = match[1] ?? '';
+    var destination = matchLength >= 2 ? match[2] ?? match[3] ?? '' : '';
+    String title = matchLength >= 4 ? match[4] ?? '' : '';
 
     // The label must contain at least one non-whitespace character.
     if (_whitespacePattern.hasMatch(label)) {
       return false;
     }
 
-    if (title == '') {
+    if (title.isEmpty) {
       // No title.
-      title = null;
+      // title = null;
+      title = ''; //
     } else {
       // Remove "", '', or ().
       title = title.substring(1, title.length - 1);

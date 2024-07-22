@@ -54,7 +54,7 @@ Future<void> main(List<String> args) async {
 
   // Read from stdin.
   var buffer = StringBuffer();
-  String line;
+  String? line;
   while ((line = stdin.readLineSync()) != null) {
     buffer.writeln(line);
   }
